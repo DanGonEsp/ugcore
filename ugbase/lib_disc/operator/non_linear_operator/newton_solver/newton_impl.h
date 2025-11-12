@@ -455,6 +455,18 @@ double NewtonSolver<TAlgebra>::total_average_linear_steps() const
 	return total_linsolver_steps()/((double)total_linsolver_calls());
 }
 
+template <typename TAlgebra>
+double NewtonSolver<TAlgebra>::total_average_non_linear_rates() const
+{
+    int allCalls = 0;
+    number allNonLinRatesProduct = 1.0;
+    for(int call = 0; call < (int)m_vLinSolverCalls.size(); ++call)
+    {
+        allCalls += m_vLinSolverCalls[call];
+        allNonLinRatesProduct *= pow((number)m_vNonLinSolverRates[call]/(double)m_vLinSolverCalls[call],(double)m_vLinSolverCalls[call]);
+    }
+    return pow((number)allNonLinRatesProduct,(number)1.0/(number)allCalls);
+}
 
 template <typename TAlgebra>
 void NewtonSolver<TAlgebra>::clear_average_convergence()
