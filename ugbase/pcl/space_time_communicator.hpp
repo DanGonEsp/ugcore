@@ -13,7 +13,7 @@
 
 //2025-03 #include "libs/braid/braid/braid.hpp"
 
-namespace ug{ namespace xbraid {
+namespace pcl{
 
     class SpaceTimeCommunicator {
     public:
@@ -141,5 +141,5 @@ namespace ug{ namespace xbraid {
 
         //--------------------------------------------------------------------------------------------------------------
     };
-}}
+}
 #endif
