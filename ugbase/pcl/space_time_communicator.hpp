@@ -49,14 +49,15 @@ namespace pcl{
 
             MPI_Comm_split(GLOBAL, xcolor, myid, &SPATIAL);
             MPI_Comm_split(GLOBAL, tcolor, myid, &TEMPORAL);
-
+			
+			MPI_Comm_size(GLOBAL, &world_size);
+			MPI_Comm_size(TEMPORAL, &temporalsize_);
+			MPI_Comm_size(SPATIAL, &spatialsize_);
+			
             if (verbose_) {
-                MPI_Comm_size(GLOBAL, &world_size);
                 std::cout << "World size after splitting is:\t" << world_size << std::endl;
-                MPI_Comm_size(TEMPORAL, &world_size);
-                std::cout << "... with temporal world size:\t" << world_size << std::endl;
-                MPI_Comm_size(SPATIAL, &world_size);
-                std::cout << "... and spatial world size:\t" << world_size << std::endl << std::endl;
+                std::cout << "... with temporal world size:\t" << temporalsize_ << std::endl;
+                std::cout << "... and spatial world size:\t" << spatialsize_ << std::endl << std::endl;
             }
             //std::cout << "\033[0m";
 
