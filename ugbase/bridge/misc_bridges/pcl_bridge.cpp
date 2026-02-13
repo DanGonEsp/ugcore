@@ -168,7 +168,6 @@ void RegisterBridge_PCL(Registry& reg, string parentGroup)
 				.add_method("get_spatial_size", &T_SpaceTimeCommunicator::get_spatial_size)
 				.add_method("get_temporal_size", &T_SpaceTimeCommunicator::get_temporal_size)
 				.add_method("sleep", &T_SpaceTimeCommunicator::sleep)
-				.add_method("set_openmp", &T_SpaceTimeCommunicator::set_openmp)
 				.set_construct_as_smart_pointer(true);
 	}
 }

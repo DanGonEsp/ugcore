@@ -1,17 +1,40 @@
+/*
+ * Copyright (c) 2015:  G-CSC, Goethe University Frankfurt
+ * Author: Arne Nägel
+ *
+ * This file is part of UG4.
+ *
+ * UG4 is free software: you can redistribute it and/or modify it under the
+ * terms of the GNU Lesser General Public License version 3 (as published by the
+ * Free Software Foundation) with the following additional attribution
+ * requirements (according to LGPL/GPL v3 §7):
+ *
+ * (1) The following notice must be displayed in the Appropriate Legal Notices
+ * of covered and combined works: "Based on UG4 (www.ug4.org/license)".
+ *
+ * (2) The following notice must be displayed at a prominent place in the
+ * terminal output of covered works: "Based on UG4 (www.ug4.org/license)".
+ *
+ * (3) The following bibliography is recommended for citation and must be
+ * preserved in all covered files:
+ * "Reiter, S., Vogel, A., Heppner, I., Rupp, M., and Wittum, G. A massively
+ *   parallel geometric multigrid solver on hierarchically distributed grids.
+ *   Computing and visualization in science 16, 4 (2013), 151-164"
+ * "Vogel, A., Reiter, S., Rupp, M., Nägel, A., and Wittum, G. UG4 -- a novel
+ *   flexible software system for simulating pde based models on high performance
+ *   computers. Computing and visualization in science 16, 4 (2013), 165-179"
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ */
+
 #ifndef __H__PCL__PCL_SPACE_TIME_COMMUNICATOR_H
 #define __H__PCL__PCL_SPACE_TIME_COMMUNICATOR_H
 
 
-
-#include <unistd.h>
-//2025-03 #include <cassert>
-#include <common/assert.h>
-#ifdef OPENMP_THREADS
-#include <omp.h>
-#endif
 #include "pcl/pcl_comm_world.h"
-
-//2025-03 #include "libs/braid/braid/braid.hpp"
 
 namespace pcl{
 
@@ -25,74 +48,45 @@ namespace pcl{
 
         //--------------------------------------------------------------------------------------------------------------
 
-        void split(int numSpatialProcesses) {
+        void split(int numTemporalProcesses) {
 
             int world_size, myid;
             MPI_Comm_size(PCL_COMM_WORLD, &world_size);
-            UG_ASSERT(world_size % numSpatialProcesses == 0, "process_x * process_t != total_process");
+			if(world_size % numTemporalProcesses != 0 )
+				UG_THROW("SpaceTimeCommunicator: Not enough processses for temporal spliting");
+            
 
             GLOBAL = PCL_COMM_WORLD;
 
             globalsize_ = world_size;
-            spatialsize_ = numSpatialProcesses;
-            temporalsize_ = world_size / numSpatialProcesses;
-            //std::cout << "\033[1;32m";
-            if (verbose_) {
-                std::cout << "World size before splitting is:\t" << world_size << std::endl;
-            }
-
-
+            spatialsize_ = world_size / numTemporalProcesses;
+            temporalsize_ = numTemporalProcesses;
+            
 
             MPI_Comm_rank(GLOBAL, &myid);
-            const int xcolor = myid / numSpatialProcesses;
-            const int tcolor = myid % numSpatialProcesses;
+            const int xcolor = myid / spatialsize_;
+            const int tcolor = myid % spatialsize_;
 
             MPI_Comm_split(GLOBAL, xcolor, myid, &SPATIAL);
             MPI_Comm_split(GLOBAL, tcolor, myid, &TEMPORAL);
-			
-			MPI_Comm_size(GLOBAL, &world_size);
-			MPI_Comm_size(TEMPORAL, &temporalsize_);
-			MPI_Comm_size(SPATIAL, &spatialsize_);
 			
             if (verbose_) {
                 std::cout << "World size after splitting is:\t" << world_size << std::endl;
                 std::cout << "... with temporal world size:\t" << temporalsize_ << std::endl;
                 std::cout << "... and spatial world size:\t" << spatialsize_ << std::endl << std::endl;
             }
-            //std::cout << "\033[0m";
+            
 
             PCL_COMM_WORLD = SPATIAL; // replaces ugs world communicator with the communicator for spatial
         }
 
-        void set_openmp(int mode, int thread_num) {
-#ifdef OPENMP_THREADS
-            int this_core_count = 8;
-            int this_thread_count = 16;
-            if (mode == 0) { // by thread num
-                omp_set_num_threads(thread_num);
-
-            } else if (mode == 1 ) { // use full core count
-                thread_num =  this_core_count / this->globalsize;
-
-            } else if ( mode == 2 ) { // use full thread cound
-                thread_num =  this_thread_count / this->globalsize;
-            }
-            std::cout << "omp ~~ " << thread_num << std::endl;
-#endif
-
-        }
-
-        void set_node_cores() {
-
-        }
-
-        void set_node_threads() {
-
-        }
-
         void unsplit() {
             PCL_COMM_WORLD = GLOBAL; // reset the world communicator
+			
+			MPI_Comm_free(&SPATIAL); // free the spatial communicator
             SPATIAL = PCL_COMM_WORLD;
+			
+			MPI_Comm_free(&TEMPORAL);// free the temporal communicator
             TEMPORAL = PCL_COMM_WORLD;
         }
 
