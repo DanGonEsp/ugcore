@@ -432,6 +432,28 @@ static void Algebra(Registry& reg, string parentGroup)
 			.set_construct_as_smart_pointer(true);
 		reg.add_class_to_group(name, "StandardLineSearch", tag);
 	}
+//	TrustRegionMethod
+	{
+		std::string grp = parentGroup; grp.append("/Discretization/Nonlinear");
+		typedef TrustRegionMethod<vector_type> T;
+		typedef ILineSearch<vector_type> TBase;
+		string name = string("TrustRegionMethod").append(suffix);
+		reg.add_class_<T, TBase>(name, grp)
+			.add_constructor()
+			.template add_constructor<void (*)(int, number, number, bool)>()
+			.template add_constructor<void (*)(int, number, number, bool, bool)>()
+			.add_method("set_maximum_steps", &T::set_maximum_steps, "Max. steps of the line search", "steps")
+			.add_method("set_lambda_start", &T::set_lambda_start, "Initial step scaling factor", "start")
+			.add_method("set_reduce_factor", &T::set_reduce_factor, "Step reduction factor", "factor")
+			.add_method("set_suff_descent_factor", &T::set_suff_descent_factor, "Sufficient descent", "factor")
+			.add_method("set_accept_best", &T::set_accept_best, "If to accept the best", "bAcceptBest")
+			.add_method("set_check_all", &T::set_check_all, "If to test all the steps", "bCheckAll")
+			.add_method("set_maximum_defect", &T::set_maximum_defect, "Max. norm of the defect", "maxDef")
+			.add_method("set_verbose", &T::set_verbose, "Verbosity level", "verboseLevel")
+			.add_method("set_offset", &T::set_offset, "Indentation", "strOffset")
+			.set_construct_as_smart_pointer(true);
+		reg.add_class_to_group(name, "TrustRegionMethod", tag);
+	}
 
 // PreviousSolutions
 	{
