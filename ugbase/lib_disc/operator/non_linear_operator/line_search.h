@@ -557,7 +557,7 @@ class TrustRegionMethod : public ILineSearch<TVector>
 			s.resize(u.size());
 			p_aux.resize(p.size());
 		//	start factor
-			number lambda = m_lambdaStart;
+			//number lambda = m_lambdaStart;
 
 		//	some values
 			number norm, norm_old = defect;
@@ -569,10 +569,24 @@ class TrustRegionMethod : public ILineSearch<TVector>
 		// remember u
 			s = u;
 			p_aux = p;
-			number Delta = p_aux.norm();
+			number DeltaP = p_aux.norm();
+			m_Delta = fmin(m_Delta,DeltaP);
+			m_lambdaStart = m_Delta / DeltaP;
+			
+			
+			if (1e-05 > m_lambdaStart)
+			{
+				UG_LOG("ERROR in 'TrustRegionMethod::search':"
+						" minimum leght-limit is reached.\n");
+				m_Delta = DeltaP;
+				return false;
+			}
+			number lambda = m_lambdaStart;
+			std::vector<number> vRatio;
+			size_t best_d;
 		//	print heading line
 		if(m_verbose)
-			UG_LOG(m_offset << "   ++++ TrustRegion: Delta = "    << Delta <<"\n"
+			UG_LOG(m_offset << "   ++++ TrustRegion: Delta = "    << m_Delta <<"  Delta_p = " << DeltaP <<". \n"
 							<< "   +       Iter       lambda        Defect          PreDefect          Ratio          Rate \n");
 
 		//	loop line search steps
@@ -622,6 +636,7 @@ class TrustRegionMethod : public ILineSearch<TVector>
 				vRho.push_back(norm/norm_old);
 				number PredRed = R2 * (lambda - 0.5*lambda*lambda);
 				number Red = 0.5*(R2 - norm*norm);
+				vRatio.push_back(Red/PredRed);
 				if(m_verbose)
 					UG_LOG(m_offset << "   + " << std::setw(4)
 							<< k << ":   " << std::setw(11)
@@ -629,7 +644,7 @@ class TrustRegionMethod : public ILineSearch<TVector>
 							<<lambda << "     "
 							<< std::scientific << norm << "     "
 							<< std::scientific << PredRed << "     "
-							<<Red/PredRed<< "     "
+							<<vRatio.back()<< "     "
 							<< vRho.back() <<"\n");
 
 			// 	check if reduction fits
@@ -637,6 +652,12 @@ class TrustRegionMethod : public ILineSearch<TVector>
 				if(vRho.back() <= 1 - m_alpha ) // Better choice for linesearch
 				{
 					converged = true;
+					
+					if (vRatio.back()<0.5)
+						m_Delta = lambda* DeltaP;
+					else
+						m_Delta = 2.0 *lambda* DeltaP;
+					
 					if(!m_bCheckAll) break;
 				}
 
@@ -663,6 +684,7 @@ class TrustRegionMethod : public ILineSearch<TVector>
 							best = i;
 						}
 					}
+					best_d = best;
 
 				/*	check if best is converging (i.e. rho < 1)
 					if(vRho[best] >= 1)
@@ -721,6 +743,15 @@ class TrustRegionMethod : public ILineSearch<TVector>
 								" maximum defect-limit is reached.\n");
 						return false;
 					}
+										
+					if( vRho[best] > 3.0)
+						m_Delta = m_lambdaStart*std::pow(m_lambdaReduce, (number)best)*DeltaP/2.0;
+					else if (vRatio[best]<0.0 && vRho[0] <1.05)
+						m_Delta = 2.0 * m_Delta;
+					else if (vRatio[best]<0.7)
+						m_Delta = m_Delta;
+					else
+						m_Delta = 2.0 * m_lambdaStart*std::pow(m_lambdaReduce, (number)best)*DeltaP;
 
 				//	break to finish
 					break;

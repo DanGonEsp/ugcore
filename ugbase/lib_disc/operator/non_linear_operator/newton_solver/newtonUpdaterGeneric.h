@@ -68,6 +68,111 @@ public:
 
 };
 
+
+template <typename TVector>
+class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
+{
+	public:
+		
+		// Destructor
+		virtual ~NewtonUpdaterProjection() override = default;
+
+		// Constructor
+		NewtonUpdaterProjection(): m_numfct(3), u_max(1.1), u_min(1e-05){};
+	
+		using vector_type = TVector;
+
+		// Override simple updateSolution
+		virtual bool updateSolution(vector_type& sol,
+									vector_type const& corr,
+									bool signNegative = true) override
+		{
+			// Call base class update
+			bool UpdatedSol = NewtonUpdaterGeneric<TVector>::updateSolution(sol, corr, signNegative);
+
+			// Apply projection
+			if(UpdatedSol)
+				UpdatedSol = UpdatedSol && project(sol);
+
+			return UpdatedSol;
+		}
+
+		// Override scaled updateSolution
+		virtual bool updateSolution(vector_type& solNew,
+									number scaleOldSol,
+									vector_type const& solOld,
+									number scaleCorr,
+									vector_type const& corr) override
+		{
+			// Call base class update
+			bool UpdatedSol = NewtonUpdaterGeneric<TVector>::updateSolution(solNew, scaleOldSol, solOld, scaleCorr, corr);
+
+			// Apply projection
+			if(UpdatedSol)
+				UpdatedSol = UpdatedSol && project(solNew);
+
+			return UpdatedSol;
+		}
+
+		// Override resetSolution
+		virtual bool resetSolution(vector_type& resettedSol,
+								   vector_type const& oldSol) override
+		{
+			// Call base class reset
+			return NewtonUpdaterGeneric<TVector>::resetSolution(resettedSol, oldSol);
+		}
+		
+		
+		// Override tellAndFixUpdateEvents
+		virtual bool tellAndFixUpdateEvents( vector_type const & sol ) override
+		{
+			return NewtonUpdaterGeneric<TVector>::tellAndFixUpdateEvents( sol );
+
+		}
+	public:
+	///	sets variable which will be projected
+		void set_projection_fct(int numfct) {m_numfct = numfct;}
+
+	///	sets max threshold
+		void set_max_threshold(number upper_bound) {u_max = upper_bound;}
+
+	///	sets min threshold
+		void set_min_threshold(number lower_bound) {u_min = lower_bound;}
+		
+	
+	protected:
+	/// solution copy
+		vector_type u_aux;
+	/// Main variable index to apply projection
+		int m_numfct;
+	/// Upper bound
+		number u_max;
+	/// Lower bound
+		number u_min;
+	private:
+		// Projection logic (example: clamp all values >= 0)
+		bool project(vector_type& u)
+		{
+			u_aux.resize(u.size());
+			u_aux = u;
+	
+			const int dof = u_aux.size();
+			
+			
+			for(int k = 0; k < dof; ++k)
+			{
+				
+				u_aux[k](m_numfct,0) = fmax(u_min,fmin(u_max,u_aux[k](m_numfct,0)));
+				
+			}
+			
+			u = u_aux;
+
+			
+			return true;
+		}
+};
+
 }
 
 

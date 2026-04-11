@@ -211,7 +211,7 @@ bool NewtonSolver<TAlgebra>::apply(vector_type& u)
 	{
 		snprintf(debug_name_ext, 20, "_iter%03d", loopCnt);
 		write_debug(*spD, std::string("NEWTON_Defect") + debug_name_ext);
-		write_debug(u, "NEWTON_StartSolution");
+		write_debug(u, std::string("NEWTON_Solution") + debug_name_ext);
 	}
 
 // 	increase offset of output for linear solver
