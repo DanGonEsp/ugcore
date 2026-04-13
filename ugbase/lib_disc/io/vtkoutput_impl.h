@@ -479,7 +479,7 @@ print_subsets(const char* filename, TFunction& u, const SubsetGroup& ssGrp, int 
 #ifdef UG_PARALLEL
 	//	write grouping *.pvtu file in parallel case
 		try{
-			write_pvtu(u, filename, -1, step, time, ssGrp); // "-1" because we do not want any subset prefixes! -1 will never print the pvtu because we need the (si) index to ensure some varialbes are contented in the subset
+			write_pvtu(u, filename, -1, step, time, ssGrp); // "-1" because we do not want any subset prefixes!
 		}
 		UG_CATCH_THROW("VTK::print_subsets: Failed to write pvtu-file.");
 #endif
@@ -2372,6 +2372,7 @@ write_pvtu(TFunction& u, const std::string& filename,
 			//	check that all functions are contained in subset
 				bool bContained = true;
 				for(size_t i = 0; i < fctGrp.size(); ++i)
+				{
 					// Case for print_subset()
 					if(si>=0)
 					{
@@ -2385,6 +2386,7 @@ write_pvtu(TFunction& u, const std::string& filename,
 							if(!u.is_def_in_subset(fctGrp[i], ssGrp[j]))
 								bContained = false;
 					}
+				}
 
 				if(!bContained) continue;
 
