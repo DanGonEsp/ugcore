@@ -65,6 +65,11 @@ public:
 	{
 		return true;
 	}
+	
+	virtual int counter()
+	{
+		return 0;
+	}
 
 };
 
@@ -78,7 +83,7 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 		virtual ~NewtonUpdaterProjection() override = default;
 
 		// Constructor
-		NewtonUpdaterProjection(): m_numfct(3), u_max(1.1), u_min(1e-05){};
+		NewtonUpdaterProjection(): m_count(0), m_numfct(3), u_max(1.1), u_min(1e-05){};
 	
 		using vector_type = TVector;
 
@@ -129,6 +134,11 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 			return NewtonUpdaterGeneric<TVector>::tellAndFixUpdateEvents( sol );
 
 		}
+		// Override counter
+		virtual int counter( ) override
+		{
+			return m_count;
+		}
 	public:
 	///	sets variable which will be projected
 		void set_projection_fct(int numfct) {m_numfct = numfct;}
@@ -149,6 +159,7 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 		number u_max;
 	/// Lower bound
 		number u_min;
+		int m_count;
 	private:
 		// Projection logic (example: clamp all values >= 0)
 		bool project(vector_type& u)
@@ -157,16 +168,32 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 			u_aux = u;
 	
 			const int dof = u_aux.size();
-			
+			int Count = 0;
 			
 			for(int k = 0; k < dof; ++k)
 			{
-				
-				u_aux[k](m_numfct,0) = fmax(u_min,fmin(u_max,u_aux[k](m_numfct,0)));
+				if(u_aux[k](m_numfct,0) > u_max || u_aux[k](m_numfct,0) < u_min)
+				{
+					u_aux[k](m_numfct,0) = fmax(u_min,fmin(u_max,u_aux[k](m_numfct,0)));
+					Count += 1;
+				}
 				
 			}
 			
 			u = u_aux;
+			
+			#ifdef UG_PARALLEL
+				// sum over processes
+				if(pcl::NumProcs() > 1)
+				{
+					pcl::ProcessCommunicator com;
+					int local = Count;
+					com.allreduce(&local, &m_count, 1, PCL_DT_INT, PCL_RO_SUM);
+				}
+				else
+					m_count = Count;
+			
+			#endif
 
 			
 			return true;

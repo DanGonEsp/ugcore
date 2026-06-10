@@ -247,6 +247,75 @@ template <>
 struct attachment_reduce_traits<std::vector<number> > :
 	public std_number_vector_attachment_reduce_traits {};
 
+template <int dim>
+struct matrix_attachment_reduce_traits
+{
+	typedef MathMatrix<dim,dim> value_t;
+	static inline value_t min(value_t v1, value_t v2)
+	{
+		value_t v;
+		for(int i = 0; i < dim; ++i)
+			for(int j = 0; j < dim; ++j)
+				v[i][j] = std::min(v1[i][j], v2[i][j]);
+		return v;
+	}
+	static inline value_t max(value_t v1, value_t v2)
+	{
+		value_t v;
+		for(int i = 0; i < dim; ++i)
+			for(int j = 0; j < dim; ++j)
+				v[i][j] = std::max(v1[i][j], v2[i][j]);
+		return v;
+	}
+	static inline value_t sum(value_t v1, value_t v2)
+	{
+		value_t v = v1;
+		v += v2;
+		return v;
+	}
+	static inline value_t prod(value_t v1, value_t v2)
+	{
+		value_t v;
+		for(int i = 0; i < dim; ++i)
+			for(int j = 0; j < dim; ++j)
+				v[i][j] = v1[i][j] * v2[i][j];
+		return v;
+	}
+	static inline value_t land(value_t v1, value_t v2)
+	{
+		value_t v;
+		for(int i = 0; i < dim; ++i)
+			for(int j = 0; j < dim; ++j)
+				v[i][j] = v1[i][j] && v2[i][j];
+		return v;
+	}
+	static inline value_t band(value_t v1, value_t v2)	{UG_THROW("matrices do not support a binary and operation.");}
+	static inline value_t lor(value_t v1, value_t v2)
+	{
+		value_t v;
+		for(int i = 0; i < dim; ++i)
+			for(int j = 0; j < dim; ++j)
+				v[i][j] = v1[i][j] || v2[i][j];
+		return v;
+	}
+	static inline value_t bor(value_t v1, value_t v2)	{UG_THROW("matrices do not support a binary or operation.");}
+};
+
+template <>
+struct attachment_reduce_traits<MathMatrix<1,1> > :
+	public matrix_attachment_reduce_traits<1>	{};
+
+template <>
+struct attachment_reduce_traits<MathMatrix<2,2> > :
+	public matrix_attachment_reduce_traits<2>	{};
+
+template <>
+struct attachment_reduce_traits<MathMatrix<3,3> > :
+	public vector_attachment_reduce_traits<3>	{};
+
+template <>
+struct attachment_reduce_traits<MathMatrix<4,4> > :
+	public matrix_attachment_reduce_traits<4>	{};
 
 ///	Performs reduce operations on the specified attachment
 /**	Currently the following reduce operations are supported:

@@ -199,10 +199,11 @@ class StandardLineSearch : public ILineSearch<TVector>
 			PROFILE_BEGIN_GROUP(StandardLineSearch_search, ""); // group?
 		// 	clone pattern for s
 			s.resize(u.size());
-
+			p_aux.resize(p.size());
+			p_aux=p;
 		//	start factor
 			number lambda = m_lambdaStart;
-
+			number DeltaP = p_aux.norm();
 		//	some values
 			number norm, norm_old = defect;
 			bool converged = false;
@@ -213,7 +214,7 @@ class StandardLineSearch : public ILineSearch<TVector>
 
 		//	print heading line
 		if(m_verbose)
-			UG_LOG(m_offset << "   ++++ Line Search:\n"
+			UG_LOG(m_offset << "   ++++ Line Search:  Correction =  "<< DeltaP <<"\n"
 							<< "   +  Iter       lambda        Defect          Rate \n");
 
 
@@ -433,6 +434,7 @@ class StandardLineSearch : public ILineSearch<TVector>
 	protected:
 	/// solution in line direction
 		vector_type s;
+		vector_type p_aux;
 
 	protected:
 	/// maximum number of steps to be performed

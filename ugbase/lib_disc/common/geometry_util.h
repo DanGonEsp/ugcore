@@ -770,7 +770,11 @@ struct ElementSideRayIntersectionWrapper<TRefElem, 2, 2>
 		}
 		// if not found
 		if(sideOut >= rRefElem.num(dim-1))
+		{
+			UG_LOG("ElementSideRayIntersection: sideOut = "<< sideOut <<" .\n");
+			UG_LOG("ElementSideRayIntersection: rRefElem.num(dim-1) = "<< rRefElem.num(dim-1) <<" .\n");
 			UG_THROW("ElementSideRayIntersection: no cut side found.");
+		}
 
 		// Compute local intersection
 		VecScaleAdd(LocalIntersectionPoint, bc, rRefElem.corner(p1), 1.-bc, rRefElem.corner(p0));
