@@ -338,6 +338,7 @@ static void Algebra(Registry& reg, string parentGroup)
 			.add_method("clear_inner_step_update", &T::clear_inner_step_update, "clear inner step update", "")
 			.add_method("add_step_update", &T::add_step_update, "data update called before every Newton step", "")
 			.add_method("clear_step_update", &T::clear_step_update, "clear step update", "")
+			.add_method("auto_update", &T::auto_update, "specify if update is done inside the NewtonMethod", "")
 //#if ENABLE_NESTED_NEWTON_RESOLFUNC_UPDATE
 			.add_method("setNewtonUpdater", &T::setNewtonUpdater, "set the Newton updater", "")
 //#endif

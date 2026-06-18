@@ -237,9 +237,11 @@ bool NewtonSolver<TAlgebra>::apply(vector_type& u)
 		NEWTON_PROFILE_BEGIN(NewtonSetCorretionZero);
 		spC->set(0.0);
 		NEWTON_PROFILE_END();
-
-		for(size_t i = 0; i < m_innerStepUpdate.size(); ++i)
-			m_innerStepUpdate[i]->update();
+		if(m_auto_update)
+		{
+			for(size_t i = 0; i < m_innerStepUpdate.size(); ++i)
+				m_innerStepUpdate[i]->update();
+		}
 
 	// 	Compute Jacobian
 		try{

@@ -145,6 +145,10 @@ class NewtonSolver
 		void clear_inner_step_update(SmartPtr<INewtonUpdate > NU)
 			{m_innerStepUpdate.clear();}
 
+	///	return step update
+		std::vector<SmartPtr<INewtonUpdate> > inner_step_update()
+			{return m_innerStepUpdate;}
+
 	///	add outer step update (applied before every Newton step)
 		void add_step_update(SmartPtr<INewtonUpdate > NU)
 			{m_stepUpdate.push_back(NU);}
@@ -152,6 +156,10 @@ class NewtonSolver
 	///	clears outer step update
 		void clear_step_update(SmartPtr<INewtonUpdate > NU)
 			{m_stepUpdate.clear();}
+	
+	///	specify if update is done inside the NewtonMethod
+		void auto_update(const bool update)
+			{m_auto_update = update;}
 		
 	///	sets the frequency of reassembling of the Jacobian (0 == 1 == in every step, i.e. classically)
 		void set_reassemble_J_freq(int freq)
@@ -199,6 +207,7 @@ class NewtonSolver
 	/// Update
 		std::vector<SmartPtr<INewtonUpdate> > m_innerStepUpdate;
 		std::vector<SmartPtr<INewtonUpdate> > m_stepUpdate;
+		bool m_auto_update = false;
 
 	///	assembling routine
 		SmartPtr<AssembledOperator<algebra_type> > m_N;
