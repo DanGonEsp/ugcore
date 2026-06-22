@@ -126,6 +126,9 @@ class IOperatorInverse
 	 * \returns std::string	necessary information about configuration parameters
 	 */
 		virtual std::string config_string() const = 0;
+	
+		virtual void step_update(){};
+		virtual void inner_step_update(){};
 };
 
 

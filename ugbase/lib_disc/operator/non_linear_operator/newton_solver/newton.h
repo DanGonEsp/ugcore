@@ -144,10 +144,12 @@ class NewtonSolver
 	///	clears inner step update
 		void clear_inner_step_update(SmartPtr<INewtonUpdate > NU)
 			{m_innerStepUpdate.clear();}
-
-	///	return step update
-		std::vector<SmartPtr<INewtonUpdate> > inner_step_update()
-			{return m_innerStepUpdate;}
+	
+		virtual void inner_step_update()
+		{
+			for(size_t i = 0; i < m_innerStepUpdate.size(); ++i)
+				m_innerStepUpdate[i]->update();
+		}
 
 	///	add outer step update (applied before every Newton step)
 		void add_step_update(SmartPtr<INewtonUpdate > NU)
@@ -156,6 +158,12 @@ class NewtonSolver
 	///	clears outer step update
 		void clear_step_update(SmartPtr<INewtonUpdate > NU)
 			{m_stepUpdate.clear();}
+	
+		virtual void step_update()
+		{
+			for(size_t i = 0; i < m_stepUpdate.size(); ++i)
+				m_stepUpdate[i]->update();
+		}
 	
 	///	specify if update is done inside the NewtonMethod
 		void auto_update(const bool update)
@@ -207,7 +215,7 @@ class NewtonSolver
 	/// Update
 		std::vector<SmartPtr<INewtonUpdate> > m_innerStepUpdate;
 		std::vector<SmartPtr<INewtonUpdate> > m_stepUpdate;
-		bool m_auto_update = false;
+		bool m_auto_update = true;
 
 	///	assembling routine
 		SmartPtr<AssembledOperator<algebra_type> > m_N;

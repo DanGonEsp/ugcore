@@ -224,9 +224,11 @@ bool NewtonSolver<TAlgebra>::apply(vector_type& u)
 
 // 	start convergence check
 	m_spConvCheck->start(*spD);
-
-	for(size_t i = 0; i < m_stepUpdate.size(); ++i)
-		m_stepUpdate[i]->update();
+	if(m_auto_update)
+	{
+		for(size_t i = 0; i < m_stepUpdate.size(); ++i)
+			m_stepUpdate[i]->update();
+	}
 
 //	loop iteration
 	while(!m_spConvCheck->iteration_ended())
