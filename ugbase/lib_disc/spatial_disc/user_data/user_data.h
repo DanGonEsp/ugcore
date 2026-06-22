@@ -38,6 +38,7 @@
 #include <functional>
 
 #include "common/types.h"
+#include "lib_grid/grid_objects/grid_dim_traits.h"
 #include "lib_disc/common/local_algebra.h"
 #include "lib_disc/time_disc/solution_time_series.h"
 #include "lib_disc/common/function_group.h"
@@ -272,6 +273,12 @@ class ICplUserData : virtual public UserDataInfo
 
 	///	returns the subset of evaluation
 		int subset() const {return m_si;}
+		
+	/// set the element
+		void set_element(GridObject* e) {m_elem = e;}
+	
+	/// returns the element of evaluation
+		GridObject* element() const {return m_elem;}
 
 	///	set evaluation time
 		void set_times(const std::vector<number>& vTime) {m_vTime = vTime;}
@@ -478,6 +485,9 @@ class ICplUserData : virtual public UserDataInfo
 
 	///	subset for evaluation
 		int m_si;
+	
+	/// grid element of the global ip's
+		GridObject* m_elem;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
