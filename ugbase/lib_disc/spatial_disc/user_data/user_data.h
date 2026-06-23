@@ -274,12 +274,6 @@ class ICplUserData : virtual public UserDataInfo
 	///	returns the subset of evaluation
 		int subset() const {return m_si;}
 		
-	/// set the element
-		void set_element(GridObject* e) {m_elem = e;}
-	
-	/// returns the element of evaluation
-		GridObject* element() const {return m_elem;}
-
 	///	set evaluation time
 		void set_times(const std::vector<number>& vTime) {m_vTime = vTime;}
 
@@ -399,6 +393,9 @@ class ICplUserData : virtual public UserDataInfo
 	///	returns true iff the time point specification is equal to the current one, or not specified
 		inline bool at_current_time(size_t s) const;
 
+	/// called in the preparation for a particular element
+		virtual void prepare_element(GridObject* e, const MathVector<dim> vCornerCoords[]) {}
+	
 	///	set global positions
 		void set_global_ips(size_t s, const MathVector<dim>* vPos, size_t numIP);
 
@@ -485,9 +482,6 @@ class ICplUserData : virtual public UserDataInfo
 
 	///	subset for evaluation
 		int m_si;
-	
-	/// grid element of the global ip's
-		GridObject* m_elem;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -44,7 +44,7 @@ namespace ug{
 
 template <int dim>
 ICplUserData<dim>::ICplUserData()
-:	m_locPosDim(-1), m_timePoint(0), m_defaultTimePoint(-1), m_si(-1), m_elem(NULL)
+:	m_locPosDim(-1), m_timePoint(0), m_defaultTimePoint(-1), m_si(-1)
 {
 	m_vNumIP.clear();
 	m_vMayChange.clear();
@@ -63,7 +63,6 @@ void ICplUserData<dim>::clear()
 	m_timePoint = 0;
 	m_vTime.clear(); m_vTime.push_back(0.0);
 	m_si = -1;
-	m_elem = NULL;
 }
 
 template <int dim>
