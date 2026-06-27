@@ -288,7 +288,7 @@ class BiCGStab
 				VecScaleAdd(s, 1.0, r, -alpha, v);
 
 			// 	check convergence
-				convergence_check()->update(s);
+				convergence_check()->update2(s,q);
 
 				write_debugXR(x, s, convergence_check()->step(), 'a');
 
@@ -365,7 +365,7 @@ class BiCGStab
 				VecScaleAdd(r, 1.0, s, -omega, t);
 
 			// 	check convergence
-				convergence_check()->update(r);
+				convergence_check()->update2(r,q);
 
 				write_debugXR(x, r, convergence_check()->step(), 'b');
 

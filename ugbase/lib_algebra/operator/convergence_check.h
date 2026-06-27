@@ -82,6 +82,12 @@ class IConvergenceCheck
 
 		/// computes the defect and sets it a the next defect value
 		virtual void update(const TVector& d) = 0;
+	
+		/// sets the update for the current defect
+		virtual void update_defect2(number defect, number correction){};
+
+		/// computes the defect and sets it a the next defect value
+		virtual void update2(const TVector& d, const TVector& correction){};
 
 		/** iteration_ended
 		 *
@@ -197,6 +203,10 @@ class StdConvCheck : public IConvergenceCheck<TVector>
 		void update_defect(number newDefect);
 
 		void update(const TVector& d);
+	
+		void update_defect2(number newDefect, number correction);
+
+		void update2(const TVector& d, const TVector& q);
 
 		bool iteration_ended();
 

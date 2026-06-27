@@ -124,9 +124,9 @@ void StdConvCheck<TVector>::start_defect(number initialDefect)
 		}
 
 	//	start iteration output
-		print_offset(); UG_LOG("  Iter      Defect         Rate \n");
+		print_offset(); UG_LOG("  Iter      Defect        Correction      Rate \n");
 		print_offset(); UG_LOG(std::setw(4) << step() << ":    "
-								<< std::scientific << defect() <<  "      -------\n");
+								<< std::scientific << defect() <<  "      -------      -------\n");
 	}
 }
 
@@ -156,6 +156,28 @@ template <typename TVector>
 void StdConvCheck<TVector>::update(const TVector& d)
 {
 	update_defect(d.norm());
+}
+
+template <typename TVector>
+void StdConvCheck<TVector>::update_defect2(number newDefect, number newCorrection)
+{
+	m_lastDefect = m_currentDefect;
+	m_currentDefect = newDefect;
+	m_currentStep++;
+	m_ratesProduct *= newDefect/m_lastDefect;
+	if(m_verbose)
+	{
+		print_offset(); UG_LOG(std::setw(4) << step() << ":    " << std::scientific << defect() <<
+							"    " << newCorrection <<
+							"    " << defect()/m_lastDefect << "\n");
+		_defects.push_back(defect());
+	}
+}
+
+template <typename TVector>
+void StdConvCheck<TVector>::update2(const TVector& d, const TVector& q)
+{
+	update_defect2(d.norm(), q.norm());
 }
 
 template <typename TVector>
