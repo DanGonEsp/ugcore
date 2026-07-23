@@ -112,12 +112,12 @@ class ConsistentGravityLinker
 			const LocalShapeFunctionSet<refDim>& trialSpace =
 				LocalFiniteElementProvider::get<refDim>(roid, LFEID(LFEID::LAGRANGE, refDim, 1));
 	
-			// Consistent gravity
+		// consistent gravity
 			StdLinConsistentGravity<refDim> ConsGravityMethod;
 			std::vector<MathVector<refDim> > vConsGravity(nco);
 			std::vector<MathVector<refDim> > vLocalGrad(nco);
 			
-			// Coefficients at the integration points
+		// coefficients at the integration points
 			MathVector<dim> gravity; // we assume that the gravity is constant in the elem
 			std::vector<number> vDensity(nco);
 
@@ -130,7 +130,18 @@ class ConsistentGravityLinker
 					(&(vConsGravity[0]), nco, vCornerCoords, &(vDensity[0]), m_gravity);
 			}
 			UG_CATCH_THROW ("ConsistentDarcyVelLinker: Cannot prepare the consistent gravity.");
-
+			
+		// get jacobians of the transformation mapping if not passed
+			std::vector<MathMatrix<refDim, dim> > vJT_;
+			if(vJT == NULL)
+			{
+				DimReferenceMapping<refDim, dim>& mapping
+					= ReferenceMappingProvider::get<refDim, dim>(roid, vCornerCoords);
+				vJT_.resize(nip);
+				mapping.jacobian_transposed(&(vJT_[0]), vLocalIP, nip);
+				vJT = &(vJT_[0]);
+			}
+			
 			for(size_t ip = 0; ip < nip; ++ip)
 			{
 			//	get the local gradient (assuming the Lagrange-1 basis functions)
@@ -214,6 +225,17 @@ class ConsistentGravityLinker
 			}
 			UG_CATCH_THROW ("ConsistentGravityLinker: Cannot prepare the consistent gravity.");
 
+			// get jacobians of the transformation mapping if not passed
+			std::vector<MathMatrix<refDim, dim> > vJT_;
+			if(vJT == NULL)
+			{
+				DimReferenceMapping<refDim, dim>& mapping
+					= ReferenceMappingProvider::get<refDim, dim>(roid, vCornerCoords);
+				vJT_.resize(nip);
+				mapping.jacobian_transposed(&(vJT_[0]), vLocalIP, nip);
+				vJT = &(vJT_[0]);
+			}
+			
 			for(size_t ip = 0; ip < nip; ++ip)
 			{
 			//	get the local gradient (assuming the Lagrange-1 basis functions)
