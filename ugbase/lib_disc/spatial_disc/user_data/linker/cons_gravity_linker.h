@@ -256,7 +256,7 @@ class ConsistentGravityLinker
 
 			this->set_zero(vvvDeriv, nip);
 			
-			if(m_noDerivatives || this->zero_derivative() || m_spDDensity->zero_derivative())
+			if(m_noDerivatives || this->zero_derivative() || (!m_spDDensity.valid()) || m_spDDensity->zero_derivative())
 				return;
 
         //  prepare derivatives of the primary function at the corners
