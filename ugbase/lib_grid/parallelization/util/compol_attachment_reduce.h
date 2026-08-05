@@ -311,7 +311,7 @@ struct attachment_reduce_traits<MathMatrix<2,2> > :
 
 template <>
 struct attachment_reduce_traits<MathMatrix<3,3> > :
-	public vector_attachment_reduce_traits<3>	{};
+	public matrix_attachment_reduce_traits<3>	{};
 
 template <>
 struct attachment_reduce_traits<MathMatrix<4,4> > :
