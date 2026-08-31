@@ -176,7 +176,6 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 		template <typename T>static typename std::enable_if<!std::is_arithmetic<T>::value,decltype(std::declval<T&>()(0,0))>::type
 		projection_value(T& value, int fct)
 		{
-			UG_THROW("UGBASE:Not implemented");
 			return value(fct, 0);
 		}
 	private:
