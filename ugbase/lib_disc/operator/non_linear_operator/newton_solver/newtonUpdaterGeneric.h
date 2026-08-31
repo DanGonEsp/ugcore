@@ -14,6 +14,7 @@
 #include <cmath>
 #include <sstream>
 #include <type_traits>
+#include <utility>
 
 #include "common/common.h"
 
@@ -161,6 +162,24 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 		number u_min;
 		int m_count;
 	private:
+
+		// Scalar algebra: u[k] is directly a number
+		template <typename T>
+		static typename std::enable_if<std::is_arithmetic<T>::value,T&>::type
+		projection_value(T& value, int)
+		{
+			UG_THROW("UGBASE:Not implemented");
+			return value;
+		}
+
+		// Block algebra: u[k] is a vector/block
+		template <typename T>static typename std::enable_if<!std::is_arithmetic<T>::value,decltype(std::declval<T&>()(0,0))>::type
+		projection_value(T& value, int fct)
+		{
+			UG_THROW("UGBASE:Not implemented");
+			return value(fct, 0);
+		}
+	private:
 		// Projection logic (example: clamp all values >= 0)
 		bool project(vector_type& u)
 		{
@@ -172,12 +191,13 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 			
 			for(int k = 0; k < dof; ++k)
 			{
-				if(u_aux[k](m_numfct,0) > u_max || u_aux[k](m_numfct,0) < u_min)
+				auto& val = projection_value(u_aux[k], m_numfct);
+
+				if(val > u_max || val < u_min)
 				{
-					u_aux[k](m_numfct,0) = fmax(u_min,fmin(u_max,u_aux[k](m_numfct,0)));
+					val = fmax(u_min, fmin(u_max, val));
 					Count += 1;
 				}
-				
 			}
 			
 			u = u_aux;
