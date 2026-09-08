@@ -228,7 +228,30 @@ class ILUTPreconditioner : public IPreconditioner<TAlgebra>
 			if (cnt) UG_LOG_ALL_PROCS("Converted "<<cnt<<" zero rows into Dirichlet rows.\n");
 #endif
 
-			return preprocess_mat2(m2);
+			bool localSuccess = true;
+
+			try
+			{
+				localSuccess = preprocess_mat2(m2);
+
+			}
+			catch (...)
+			{
+				localSuccess = false;
+			}
+
+			// Make sure that all MPI processes agree on the ILUT initialization
+			int globalSuccess =
+				mat.layouts()->proc_comm().allreduce(
+					localSuccess ? 1 : 0,
+					PCL_RO_MIN);
+
+			if (!globalSuccess)
+			{
+				UG_THROW("ILUT: preprocess_mat2 failed on at least one process.");
+			}
+
+			return true;
 #else
 			return preprocess_mat2(mat);
 #endif
