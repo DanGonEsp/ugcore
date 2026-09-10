@@ -185,8 +185,8 @@ bool StdConvCheck<TVector>::iteration_ended()
 {
 	if(!is_valid_number(m_currentDefect)) return true;
 	if(step() >= m_maxSteps) return true;
-	if(defect() < m_minDefect) return true;
-	if(reduction() < m_relReduction) return true;
+	if(defect() < m_minDefect && step()>0) return true;
+	if(reduction() < m_relReduction && step()>0) return true;
 	return false;
 }
 
