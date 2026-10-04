@@ -143,6 +143,12 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 	public:
 	///	sets variable which will be projected
 		void set_projection_fct(int numfct) {m_numfct = numfct;}
+	
+		void set_projection_mask(const vector_type& mask)
+		{
+			m_projectionMask = mask;
+			m_hasProjectionMask = true;
+		}
 
 	///	sets max threshold
 		void set_max_threshold(number upper_bound) {u_max = upper_bound;}
@@ -161,14 +167,17 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 	/// Lower bound
 		number u_min;
 		int m_count;
+	
+		vector_type m_projectionMask;
+		bool m_hasProjectionMask = false;
+	
 	private:
 
-		// Scalar algebra: u[k] is directly a number
+		// Scalar algebra: each entry is a number.
 		template <typename T>
-		static typename std::enable_if<std::is_arithmetic<T>::value,T&>::type
+		static typename std::enable_if<std::is_arithmetic<T>::value, T&>::type
 		projection_value(T& value, int)
 		{
-			UG_THROW("UGBASE:Not implemented");
 			return value;
 		}
 
@@ -179,44 +188,60 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 			return value(fct, 0);
 		}
 	private:
-		// Projection logic (example: clamp all values >= 0)
-		bool project(vector_type& u)
+	bool project(vector_type& u)
+	{
+		const bool scalarAlgebra = std::is_arithmetic<typename vector_type::value_type>::value;
+
+		if(scalarAlgebra)
 		{
-			u_aux.resize(u.size());
-			u_aux = u;
-	
-			const int dof = u_aux.size();
-			int Count = 0;
-			
-			for(int k = 0; k < dof; ++k)
-			{
-				auto& val = projection_value(u_aux[k], m_numfct);
+			if(!m_hasProjectionMask)
+				UG_THROW("NewtonUpdaterProjection: CPU1 requires a projection mask.");
 
-				if(val > u_max || val < u_min)
-				{
-					val = fmax(u_min, fmin(u_max, val));
-					Count += 1;
-				}
-			}
-			
-			u = u_aux;
-			
-			#ifdef UG_PARALLEL
-				// sum over processes
-				if(pcl::NumProcs() > 1)
-				{
-					pcl::ProcessCommunicator com;
-					int local = Count;
-					com.allreduce(&local, &m_count, 1, PCL_DT_INT, PCL_RO_SUM);
-				}
-				else
-					m_count = Count;
-			
-			#endif
-
-			
-			return true;
+			if(m_projectionMask.size() != u.size())
+				UG_THROW("NewtonUpdaterProjection: mask and solution sizes differ.");
 		}
+
+		if(u_min > u_max)
+			UG_THROW("NewtonUpdaterProjection: invalid projection bounds.");
+
+		u_aux.resize(u.size());
+		u_aux = u;
+
+		int Count = 0;
+
+		for(size_t k = 0; k < u_aux.size(); ++k)
+		{
+			// Only scalar algebra uses the mask.
+			if(scalarAlgebra)
+			{
+				if(projection_value(m_projectionMask[k], m_numfct) == 0.0)
+					continue;
+			}
+
+			// CPU1: scalar entry selected by the mask.
+			// Block algebra: component m_numfct inside block k.
+			auto& val = projection_value(u_aux[k], m_numfct);
+
+			if(val > u_max || val < u_min)
+			{
+				val = fmax(u_min, fmin(u_max, val));
+				++Count;
+			}
+		}
+
+		u = u_aux;
+		m_count = Count;
+
+	#ifdef UG_PARALLEL
+		if(pcl::NumProcs() > 1)
+		{
+			pcl::ProcessCommunicator com;
+			com.allreduce(&Count, &m_count, 1, PCL_DT_INT, PCL_RO_SUM);
+		}
+	#endif
+
+		return true;
+	}
 };
 
 }

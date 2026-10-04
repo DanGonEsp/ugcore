@@ -295,6 +295,7 @@ static void Algebra(Registry& reg, string parentGroup)
 		reg.add_class_<T,TBase>(name, grp)
 			.add_constructor()
 			.add_method("set_projection_fct", &T::set_projection_fct, "fct Index")
+			.add_method("set_projection_mask", &T::set_projection_mask, "projection mask")
 			.add_method("set_max_threshold", &T::set_max_threshold, "Max threshold")
 			.add_method("set_min_threshold", &T::set_min_threshold, "Min threshold")
 			.set_construct_as_smart_pointer(true);
