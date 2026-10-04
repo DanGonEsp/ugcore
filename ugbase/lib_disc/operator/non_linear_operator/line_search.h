@@ -273,8 +273,7 @@ class StandardLineSearch : public ILineSearch<TVector>
 							<< std::scientific << norm << "   " << vRho.back() <<"\n");
 
 			// 	check if reduction fits
-				//if(vRho.back() <= 1 - m_alpha * std::fabs(lambda))
-                if(vRho.back() <= 1 - m_alpha ) // Better choice for linesearch
+				if(vRho.back() <= 1 - m_alpha * std::fabs(lambda))
 				{
 					converged = true;
 					if(!m_bCheckAll) break;
@@ -289,7 +288,11 @@ class StandardLineSearch : public ILineSearch<TVector>
 					if(!m_bAcceptBest)
 					{
 						UG_LOG(m_offset << "   ++++ Line Search did not converge.\n");
-						return false;
+
+						   if(m_newtonUpdater != SPNULL)
+							   m_newtonUpdater->resetSolution(u,s);
+						   else
+							   u = s;
 					}
 
 				//	search minimum
