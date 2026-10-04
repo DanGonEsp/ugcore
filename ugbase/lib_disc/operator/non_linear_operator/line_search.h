@@ -293,6 +293,8 @@ class StandardLineSearch : public ILineSearch<TVector>
 							   m_newtonUpdater->resetSolution(u,s);
 						   else
 							   u = s;
+						
+						return false;
 					}
 
 				//	search minimum
