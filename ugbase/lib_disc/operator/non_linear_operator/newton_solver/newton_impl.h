@@ -193,6 +193,15 @@ bool NewtonSolver<TAlgebra>::apply(vector_type& u)
 		m_N->prepare(u);
 	}
 	UG_CATCH_THROW("NewtonSolver::prepare: Prepare of Operator failed.");
+	
+	if(m_auto_update)
+	{
+		for(size_t i = 0; i < m_stepUpdate.size(); ++i)
+			m_stepUpdate[i]->update();
+
+		for(size_t i = 0; i < m_innerStepUpdate.size(); ++i)
+			m_innerStepUpdate[i]->update();
+	}
 
 // 	Compute first Defect
 	try{
@@ -200,6 +209,9 @@ bool NewtonSolver<TAlgebra>::apply(vector_type& u)
 		m_N->apply(*spD, u);
 		NEWTON_PROFILE_END();
 	}UG_CATCH_THROW("NewtonSolver::apply: Computation of Start-Defect failed.");
+	
+	// 	start convergence check
+		m_spConvCheck->start(*spD);
 
 //	loop counts (for the the convergence rate statistics etc.)
 	int loopCnt = 0;
@@ -222,13 +234,6 @@ bool NewtonSolver<TAlgebra>::apply(vector_type& u)
 	std::stringstream ss; ss << "(Linear Solver: " << m_spLinearSolver->name() << ")";
 	m_spConvCheck->set_info(ss.str());
 
-// 	start convergence check
-	m_spConvCheck->start(*spD);
-	if(m_auto_update)
-	{
-		for(size_t i = 0; i < m_stepUpdate.size(); ++i)
-			m_stepUpdate[i]->update();
-	}
 
 //	loop iteration
 	while(!m_spConvCheck->iteration_ended())
@@ -239,11 +244,6 @@ bool NewtonSolver<TAlgebra>::apply(vector_type& u)
 		NEWTON_PROFILE_BEGIN(NewtonSetCorretionZero);
 		spC->set(0.0);
 		NEWTON_PROFILE_END();
-		if(m_auto_update)
-		{
-			for(size_t i = 0; i < m_innerStepUpdate.size(); ++i)
-				m_innerStepUpdate[i]->update();
-		}
 
 	// 	Compute Jacobian
 		try{
@@ -362,6 +362,24 @@ bool NewtonSolver<TAlgebra>::apply(vector_type& u)
 				NEWTON_PROFILE_END();
 			}
 		}UG_CATCH_THROW("NewtonSolver::apply: Line Search update failed.");
+		
+		// Synchronize auxiliary quantities with accepted solution
+		try{
+			
+			NEWTON_PROFILE_BEGIN(NewtonComputeDefectUpdated);
+			m_N->prepare(u);
+
+			if(m_auto_update)
+			{
+				for(size_t i = 0; i < m_innerStepUpdate.size(); ++i)
+					m_innerStepUpdate[i]->update();
+			}
+
+			
+			m_N->apply(*spD, u);
+			NEWTON_PROFILE_END();
+		}
+		UG_CATCH_THROW("NewtonSolver::apply: Computation of updated defect failed.");
 
 
 	//	update counter
