@@ -566,6 +566,16 @@ void CompositeConvCheck<TVector, TDomain>::update(const TVector& vec)
 
 	if (m_verbose)
 	{
+		UG_LOG(std::right
+			   << "      "
+			   << std::setw(5)  << "Iter" << "  "
+			   << std::setw(12) << "Defect" << "    "
+			   << std::setw(9)  << "Required" << "    "
+			   << std::setw(9)  << "Rate" << "    "
+			   << std::setw(12) << "Reduction" << "    "
+			   << std::setw(9)  << "Required" << "    "
+			   << "Component(s)\n");
+		
 		for (size_t cmp = 0; cmp < m_CmpInfo.size(); cmp++)
 		{
 			CmpInfo& cmpInfo = m_CmpInfo[cmp];
