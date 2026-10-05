@@ -111,6 +111,110 @@ void ComputeLexicographicOrder(std::vector<size_t>& vNewIndex,
 			vNewIndex[vPos[i].second] = vPosOrig[i].second;
 	}
 }
+template<int dim>
+void ComputeLexicographicBlockOrder(
+		std::vector<size_t>& vNewIndex,
+		const std::vector<std::pair<MathVector<dim>, size_t> >& vPos,
+		size_t blockSize,
+		size_t orderDim,
+		bool increasing)
+{
+	typedef std::pair<MathVector<dim>, size_t> pos_type;
+
+	const size_t numIndices = vNewIndex.size();
+
+	UG_COND_THROW(blockSize == 0,
+				  "ComputeLexicographicBlockOrder: blockSize is zero.");
+
+	UG_COND_THROW(numIndices % blockSize != 0,
+				  "ComputeLexicographicBlockOrder: "
+				  << numIndices << " indices are not divisible by block size "
+				  << blockSize << ".");
+	
+	UG_COND_THROW(
+		vPos.size() != numIndices,
+		"ComputeLexicographicBlockOrder: vPos.size() = "
+		<< vPos.size() << ", numIndices = " << numIndices << ".");
+
+	const size_t numBlocks = numIndices / blockSize;
+
+	std::vector<pos_type> vBlocks;
+	vBlocks.reserve(numBlocks);
+
+	// Each ungrouped geometric object owns blockSize consecutive scalar DoFs.
+	for(size_t base = 0; base < numIndices; base += blockSize)
+	{
+		// Safety check: all scalar DoFs in this block must have the same position.
+		for(size_t c = 1; c < blockSize; ++c)
+		{
+			UG_COND_THROW(
+				VecDistance(vPos[base].first, vPos[base + c].first) > 1e-10,
+				"ComputeLexicographicBlockOrder: DoFs "
+				<< base << " and " << base + c
+				<< " do not belong to the same geometric position.");
+		}
+
+		vBlocks.push_back(pos_type(vPos[base].first, base));
+	}
+
+	if(increasing)
+	{
+		if(orderDim == 0)
+			std::sort(vBlocks.begin(), vBlocks.end(), ComparePosDim<dim, 0>);
+		else if(orderDim == 1)
+			std::sort(vBlocks.begin(), vBlocks.end(), ComparePosDim<dim, 1>);
+		else if(orderDim == 2)
+			std::sort(vBlocks.begin(), vBlocks.end(), ComparePosDim<dim, 2>);
+		else
+			UG_THROW("ComputeLexicographicBlockOrder: Invalid sorting direction.");
+	}
+	else
+	{
+		if(orderDim == 0)
+			std::sort(vBlocks.begin(), vBlocks.end(), ComparePosDimDec<dim, 0>);
+		else if(orderDim == 1)
+			std::sort(vBlocks.begin(), vBlocks.end(), ComparePosDimDec<dim, 1>);
+		else if(orderDim == 2)
+			std::sort(vBlocks.begin(), vBlocks.end(), ComparePosDimDec<dim, 2>);
+		else
+			UG_THROW("ComputeLexicographicBlockOrder: Invalid sorting direction.");
+	}
+
+	// old scalar index -> new scalar index
+	for(size_t newBlock = 0; newBlock < numBlocks; ++newBlock)
+	{
+		const size_t oldPosBase = vBlocks[newBlock].second;
+		const size_t newBase = newBlock * blockSize;
+
+		for(size_t c = 0; c < blockSize; ++c)
+		{
+			const size_t oldIndex = vPos[oldPosBase + c].second;
+
+			UG_COND_THROW(
+				oldIndex >= numIndices,
+				"ComputeLexicographicBlockOrder: old index "
+				<< oldIndex << " outside [0," << numIndices-1 << "].");
+
+			vNewIndex[oldIndex] = newBase + c;
+		}
+	}
+
+	// Verify that the result is a true permutation.
+	std::vector<bool> used(numIndices, false);
+
+	for(size_t i = 0; i < numIndices; ++i)
+	{
+		UG_COND_THROW(vNewIndex[i] >= numIndices,
+					  "ComputeLexicographicBlockOrder: invalid mapped index "
+					  << vNewIndex[i] << ".");
+
+		UG_COND_THROW(used[vNewIndex[i]],
+					  "ComputeLexicographicBlockOrder: duplicate mapped index "
+					  << vNewIndex[i] << ".");
+
+		used[vNewIndex[i]] = true;
+	}
+}
 
 /// orders the dof distribution using Cuthill-McKee
 template <typename TDomain>
@@ -188,22 +292,26 @@ void OrderLexForDofDist(SmartPtr<DoFDistribution> dd, ConstSmartPtr<TDomain> dom
 	{
 		ExtractPositions(domain, dd, vPositions);
 
-	//	get mapping: old -> new index
 		std::vector<size_t> vNewIndex(dd->num_indices());
-		ComputeLexicographicOrder<TDomain::dim>(vNewIndex, vPositions, orderDim, increasing);
 
-/*
-		std::vector<bool> vCheck(dd->num_indices(), false);
-		for (size_t i = 0; i < vNewIndex.size(); ++i)
+		if(!dd->grouped() && numDoFOnGeomObj > 1)
 		{
-			UG_COND_THROW(vCheck.at(vNewIndex[i]), "Double mapping to index " << vNewIndex[i] << ".");
-			vCheck.at(vNewIndex[i]) = true;
+			ComputeLexicographicBlockOrder<TDomain::dim>(
+				vNewIndex,
+				vPositions,
+				numDoFOnGeomObj,
+				orderDim,
+				increasing);
 		}
-		for (size_t i = 0; i < vCheck.size(); ++i)
-			UG_COND_THROW(!vCheck[i], "Nothing maps to index " << i << ".");
-*/
+		else
+		{
+			ComputeLexicographicOrder<TDomain::dim>(
+				vNewIndex,
+				vPositions,
+				orderDim,
+				increasing);
+		}
 
-	//	reorder indices
 		dd->permute_indices(vNewIndex);
 	}
 //	b) we can only order some spaces
