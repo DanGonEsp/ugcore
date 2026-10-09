@@ -318,12 +318,6 @@ bool NewtonSolver<TAlgebra>::apply(vector_type& u)
 				}
 				NEWTON_PROFILE_END();
 				
-				if( m_newtonUpdater != SPNULL )
-				{
-					int count = m_newtonUpdater->counter();
-					if(count > 0)
-						UG_LOG("   #     ++++ "<< count <<" elements are not in the feasible region. \n");
-				}
 			}
 		// 	No line search: Compute new defect
 			else
@@ -362,6 +356,13 @@ bool NewtonSolver<TAlgebra>::apply(vector_type& u)
 				NEWTON_PROFILE_END();
 			}
 		}UG_CATCH_THROW("NewtonSolver::apply: Line Search update failed.");
+		
+		if( m_newtonUpdater != SPNULL )
+		{
+			int count = m_newtonUpdater->counter();
+			if(count > 0)
+				UG_LOG("   #     ++++ "<< count <<" elements are not in the feasible region. \n");
+		}
 		
 		// Synchronize auxiliary quantities with accepted solution
 		try{
