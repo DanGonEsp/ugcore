@@ -77,6 +77,13 @@
 	#define UG_ALGEBRA_CPP_TEMPLATE_DEFINE_6(TheTemplateClassType)
 #endif
 
+#ifdef UG_CPU_7
+	#define UG_ALGEBRA_CPP_TEMPLATE_DEFINE_7(TheTemplateClassType) \
+		template class TheTemplateClassType<ug::CPUBlockAlgebra<7> >;
+#else
+	#define UG_ALGEBRA_CPP_TEMPLATE_DEFINE_7(TheTemplateClassType)
+#endif
+
 #ifdef UG_CPU_VAR
 	#define UG_ALGEBRA_CPP_TEMPLATE_DEFINE_VAR(TheTemplateClassType) \
 		template class TheTemplateClassType<ug::CPUVariableBlockAlgebra >;
@@ -109,6 +116,7 @@
 		UG_ALGEBRA_CPP_TEMPLATE_DEFINE_4(TheTemplateClassType) \
 		UG_ALGEBRA_CPP_TEMPLATE_DEFINE_5(TheTemplateClassType) \
 		UG_ALGEBRA_CPP_TEMPLATE_DEFINE_6(TheTemplateClassType) \
+		UG_ALGEBRA_CPP_TEMPLATE_DEFINE_7(TheTemplateClassType) \
 		UG_ALGEBRA_CPP_TEMPLATE_DEFINE_VAR(TheTemplateClassType) \
 		UG_ALGEBRA_CPP_TEMPLATE_DEFINE_GPU(TheTemplateClassType)
 
