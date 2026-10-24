@@ -226,13 +226,13 @@ class StandardLineSearch : public ILineSearch<TVector>
 				{
 					// 	try on line u := u - lambda*p
 
-					bool acceptedNewtonUpdate = m_newtonUpdater->updateSolution(u, 1.0, u, (-1)*lambda, p);
+					bool acceptedNewtonUpdate = m_newtonUpdater->updateSolution(u, 1.0, s, (-1)*lambda, p);
 
 					if( ! acceptedNewtonUpdate )
 					{
 						UG_LOG("Update in Line Search did not work.\n");
 						norm = std::numeric_limits<number>::max();
-							//VecScaleAdd(u, 1.0, u, (-1)*lambda, p);
+							//VecScaleAdd(u, 1.0, s, (-1)*lambda, p);
 						//return false;
 					}
 					else
@@ -249,7 +249,7 @@ class StandardLineSearch : public ILineSearch<TVector>
 				{
 //#else
 				// 	try on line u := u - lambda*p
-					VecScaleAdd(u, 1.0, u, (-1)*lambda, p);
+					VecScaleAdd(u, 1.0, s, (-1)*lambda, p);
 
 				// 	compute new Defect
 					spOp->prepare(u);
@@ -604,7 +604,7 @@ class TrustRegionMethod : public ILineSearch<TVector>
 				{
 					// 	try on line u := u - lambda*p
 
-					bool acceptedNewtonUpdate = m_newtonUpdater->updateSolution(u, 1.0, u, (-1)*lambda, p);
+					bool acceptedNewtonUpdate = m_newtonUpdater->updateSolution(u, 1.0, s, (-1)*lambda, p);
 
 					if( ! acceptedNewtonUpdate )
 					{
@@ -627,7 +627,7 @@ class TrustRegionMethod : public ILineSearch<TVector>
 				{
 //#else
 				// 	try on line u := u - lambda*p
-					VecScaleAdd(u, 1.0, u, (-1)*lambda, p);
+					VecScaleAdd(u, 1.0, s, (-1)*lambda, p);
 
 				// 	compute new Defect
 					spOp->prepare(u);
