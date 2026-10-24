@@ -78,6 +78,7 @@ public:
 template <typename TVector>
 class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 {
+	
 	public:
 		
 		// Destructor
@@ -141,6 +142,13 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 			return m_count;
 		}
 	public:
+		struct ProjectionBounds
+		{
+			int fct;
+			number minValue, maxValue;
+			vector_type mask;
+			bool hasMask;
+		};
 	///	sets variable which will be projected
 		void set_projection_fct(int numfct) {m_numfct = numfct;}
 	
@@ -148,6 +156,27 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 		{
 			m_projectionMask = mask;
 			m_hasProjectionMask = true;
+		}
+		void add_projection(int fct, number minValue, number maxValue)
+		{
+			ProjectionBounds b;
+			b.fct = fct;
+			b.minValue = minValue;
+			b.maxValue = maxValue;
+			b.hasMask = false;
+			m_bounds.push_back(b);
+		}
+
+		void add_projection_mask(int fct, number minValue, number maxValue,
+								 const vector_type& mask)
+		{
+			ProjectionBounds b;
+			b.fct = fct;
+			b.minValue = minValue;
+			b.maxValue = maxValue;
+			b.mask = mask;
+			b.hasMask = true;
+			m_bounds.push_back(b);
 		}
 
 	///	sets max threshold
@@ -170,6 +199,7 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 	
 		vector_type m_projectionMask;
 		bool m_hasProjectionMask = false;
+		std::vector<ProjectionBounds> m_bounds;
 	
 	private:
 
@@ -190,42 +220,49 @@ class NewtonUpdaterProjection : public NewtonUpdaterGeneric<TVector>
 	private:
 	bool project(vector_type& u)
 	{
-		const bool scalarAlgebra = std::is_arithmetic<typename vector_type::value_type>::value;
+		const bool scalarAlgebra =
+			std::is_arithmetic<typename vector_type::value_type>::value;
 
-		if(scalarAlgebra)
+		std::vector<ProjectionBounds> bounds = m_bounds;
+
+		// Preserve the original single-component configuration.
+		if(bounds.empty())
 		{
-			if(!m_hasProjectionMask)
-				UG_THROW("NewtonUpdaterProjection: CPU1 requires a projection mask.");
-
-			if(m_projectionMask.size() != u.size())
-				UG_THROW("NewtonUpdaterProjection: mask and solution sizes differ.");
+			ProjectionBounds b;
+			b.fct = m_numfct;
+			b.minValue = u_min;
+			b.maxValue = u_max;
+			b.mask = m_projectionMask;
+			b.hasMask = m_hasProjectionMask;
+			bounds.push_back(b);
 		}
 
-		if(u_min > u_max)
-			UG_THROW("NewtonUpdaterProjection: invalid projection bounds.");
-
-		u_aux.resize(u.size());
 		u_aux = u;
-
 		int Count = 0;
 
-		for(size_t k = 0; k < u_aux.size(); ++k)
+		for(const auto& b : bounds)
 		{
-			// Only scalar algebra uses the mask.
-			if(scalarAlgebra)
+			if(b.minValue > b.maxValue)
+				UG_THROW("NewtonUpdaterProjection: invalid bounds.");
+
+			if(b.fct < 0)
+				UG_THROW("NewtonUpdaterProjection: invalid component.");
+
+			if(scalarAlgebra && (!b.hasMask || b.mask.size() != u.size()))
+				UG_THROW("NewtonUpdaterProjection: invalid CPU1 mask.");
+
+			for(size_t k = 0; k < u_aux.size(); ++k)
 			{
-				if(projection_value(m_projectionMask[k], m_numfct) == 0.0)
+				if(scalarAlgebra && projection_value(b.mask[k], b.fct) == 0.0)
 					continue;
-			}
 
-			// CPU1: scalar entry selected by the mask.
-			// Block algebra: component m_numfct inside block k.
-			auto& val = projection_value(u_aux[k], m_numfct);
+				auto& val = projection_value(u_aux[k], b.fct);
 
-			if(val > u_max || val < u_min)
-			{
-				val = fmax(u_min, fmin(u_max, val));
-				++Count;
+				if(val < b.minValue || val > b.maxValue)
+				{
+					val = std::max(b.minValue, std::min(b.maxValue, val));
+					++Count;
+				}
 			}
 		}
 
